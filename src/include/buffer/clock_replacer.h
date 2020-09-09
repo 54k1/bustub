@@ -46,7 +46,15 @@ class ClockReplacer : public Replacer {
   size_t Size() override;
 
  private:
-  // TODO(student): implement me!
+  struct Slot {
+    bool active = false;
+    bool ref = false;
+    bool pin = false;
+  };
+  size_t curr_frames;
+  size_t num_frames;
+  size_t hand;
+  std::vector<Slot> arr;
 };
 
 }  // namespace bustub
