@@ -13,6 +13,7 @@
 #pragma once
 
 #include <queue>
+#include <set>
 #include <string>
 #include <vector>
 
@@ -97,6 +98,16 @@ class LinearProbeHashTable : public HashTable<KeyType, ValueType, KeyComparator>
 
   // Hash function
   HashFunction<KeyType> hash_fn_;
+
+  // size of the hash table
+  size_t num_buckets;
+  // number of blocks
+  size_t num_blocks;
+
+  // helper
+  size_t GetNumberOfBlockPages();
+  HashTableBlockPage<KeyType, ValueType, KeyComparator> *GetHashTableBlockPage(size_t block_number);
+  HashTableHeaderPage *GetHeaderPage();
 };
 
 }  // namespace bustub

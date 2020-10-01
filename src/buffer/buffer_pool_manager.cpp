@@ -35,7 +35,7 @@ BufferPoolManager::~BufferPoolManager() {
 }
 
 Page *BufferPoolManager::FetchPageImpl(page_id_t page_id) {
-  auto it = page_table_.find (page_id);
+  auto it = page_table_.find(page_id);
   if (it != page_table_.end()) {
     return &pages_[it->second];
   }
@@ -48,13 +48,13 @@ Page *BufferPoolManager::FetchPageImpl(page_id_t page_id) {
       return nullptr;
     }
   }
-  Page& page = pages_[frame_id];
+  Page &page = pages_[frame_id];
   if (page.IsDirty()) {
     disk_manager_->WritePage(page.GetPageId(), page.GetData());
   }
   page.ResetMemory();
-  disk_manager_->ReadPage (page_id, page.GetData());
-  replacer_->Unpin (frame_id);
+  disk_manager_->ReadPage(page_id, page.GetData());
+  replacer_->Unpin(frame_id);
 
   return &pages_[frame_id];
   // 1.     Search the page table for the requested page (P).
@@ -67,12 +67,12 @@ Page *BufferPoolManager::FetchPageImpl(page_id_t page_id) {
 }
 
 bool BufferPoolManager::UnpinPageImpl(page_id_t page_id, bool is_dirty) {
-  auto it = page_table_.find (page_id);
+  auto it = page_table_.find(page_id);
   if (it == page_table_.end()) {
     return false;
   }
   replacer_->Unpin(it->second);
-  Page & page = pages_[page_table_[it->second]];
+  Page &page = pages_[page_table_[it->second]];
 
   page.pin_count_ -= 1;
   if (is_dirty) {
@@ -83,13 +83,13 @@ bool BufferPoolManager::UnpinPageImpl(page_id_t page_id, bool is_dirty) {
 
 bool BufferPoolManager::FlushPageImpl(page_id_t page_id) {
   // Make sure you call DiskManager::WritePage!
-  auto it = page_table_.find (page_id);
-  if (it == page_table_.end ()) {
+  auto it = page_table_.find(page_id);
+  if (it == page_table_.end()) {
     return false;
   }
   frame_id_t frame_id = it->second;
-  Page& page = pages_[frame_id];
-  if (page.IsDirty ()) {
+  Page &page = pages_[frame_id];
+  if (page.IsDirty()) {
     disk_manager_->WritePage(page_id, page.GetData());
   }
   return true;
@@ -106,29 +106,29 @@ Page *BufferPoolManager::NewPageImpl(page_id_t *page_id) {
     frame_id = free_list_.front();
     free_list_.pop_front();
   } else {
-    if(!replacer_->Victim(&frame_id)) { // => All pages are pinned
+    if (!replacer_->Victim(&frame_id)) {  // => All pages are pinned
       return nullptr;
     }
   }
   *page_id = disk_manager_->AllocatePage();
   page_table_[*page_id] = frame_id;
-  Page& page = pages_[frame_id];
+  Page &page = pages_[frame_id];
   page.pin_count_ += 1;
   page.page_id_ = *page_id;
   replacer_->Unpin(frame_id);
   replacer_->Pin(frame_id);
 
-  return pages_+frame_id;
+  return pages_ + frame_id;
 }
 
 bool BufferPoolManager::DeletePageImpl(page_id_t page_id) {
-  auto it = page_table_.find (page_id);
+  auto it = page_table_.find(page_id);
   if (it == page_table_.end()) {
     return true;
   }
   auto frame_id = it->second;
   free_list_.push_back(frame_id);
-  Page & page = pages_[frame_id];
+  Page &page = pages_[frame_id];
   if (page.GetPinCount() != 0) {
     return false;
   }
@@ -145,7 +145,7 @@ bool BufferPoolManager::DeletePageImpl(page_id_t page_id) {
 }
 
 void BufferPoolManager::FlushAllPagesImpl() {
-  for (auto p: page_table_) {
+  for (auto p : page_table_) {
     FlushPageImpl(p.first);
   }
 }
