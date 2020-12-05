@@ -1,0 +1,2 @@
+insert into empty_table2 (colA, colB) values (3, 4);
+select colA, colB from empty_table2

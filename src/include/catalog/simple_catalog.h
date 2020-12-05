@@ -54,14 +54,35 @@ class SimpleCatalog {
    */
   TableMetadata *CreateTable(Transaction *txn, const std::string &table_name, const Schema &schema) {
     BUSTUB_ASSERT(names_.count(table_name) == 0, "Table names should be unique!");
-    return nullptr;
+	// TableMetadata * ret = new TableMetadata (schema, table_name, next_table_oid_);
+    names_[table_name] = next_table_oid_;
+    tables_[next_table_oid_] = std::make_unique<TableMetadata> (
+      schema, table_name, 
+      std::make_unique<TableHeap> (bpm_, lock_manager_, log_manager_, txn), next_table_oid_);
+    TableMetadata * ret = tables_[next_table_oid_].get();
+    ++next_table_oid_;
+    return ret;
   }
 
   /** @return table metadata by name */
-  TableMetadata *GetTable(const std::string &table_name) { return nullptr; }
+  TableMetadata *GetTable(const std::string &table_name) {
+	  auto it = names_.find (table_name);
+	  if (it == names_.end()) {
+		  return nullptr;
+	  } else {
+		  return tables_[it->second].get();
+	  }
+  }
 
   /** @return table metadata by oid */
-  TableMetadata *GetTable(table_oid_t table_oid) { return nullptr; }
+  TableMetadata *GetTable(table_oid_t table_oid) {
+	  auto it = tables_.find (table_oid);
+	  if (it == tables_.end()) {
+		  return nullptr;
+	  } else {
+		  return it->second.get();
+	  }
+  }
 
  private:
   [[maybe_unused]] BufferPoolManager *bpm_;

@@ -99,7 +99,7 @@ class HashJoinExecutor : public AbstractExecutor {
                    std::unique_ptr<AbstractExecutor> &&right);
 
   /** @return the JHT in use. Do not modify this function, otherwise you will get a zero. */
-  // Uncomment me! const HT *GetJHT() const { return &jht_; }
+  const HT *GetJHT() const { return &jht_; }
 
   const Schema *GetOutputSchema() override { return plan_->OutputSchema(); }
 
@@ -141,5 +141,13 @@ class HashJoinExecutor : public AbstractExecutor {
   // Uncomment me! HT jht_;
   /** The number of buckets in the hash table. */
   static constexpr uint32_t jht_num_buckets_ = 2;
+
+
+  std::unique_ptr<AbstractExecutor> left_, right_;
+  HT jht_;
+  bool processing = false;
+  hash_t processing_hash;
+  size_t processing_next_index;
+  Tuple * processing_right_tuple;
 };
 }  // namespace bustub

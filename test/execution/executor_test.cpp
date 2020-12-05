@@ -49,8 +49,33 @@ class ExecutorTest : public ::testing::Test {
     txn_ = txn_mgr_->Begin();
     exec_ctx_ = std::make_unique<ExecutorContext>(txn_, catalog_.get(), bpm_.get());
     // Generate some test tables.
-    TableGenerator gen{exec_ctx_.get()};
-    gen.GenerateTestTables();
+    // TableGenerator gen{exec_ctx_.get()};
+    // gen.GenerateTestTables();
+    TableGenerator::TableInsertMeta table_meta ("empty_table2",
+       0,
+       {{"colA", TypeId::INTEGER, false, Dist::Serial, 0, 0}, {"colB", TypeId::INTEGER, false, Dist::Uniform, 0, 9}});
+
+    uint32_t num_inserted = 0;
+  uint32_t batch_size = 128;
+  while (num_inserted < table_meta->num_rows_) {
+    std::vector<std::vector<Value>> values;
+    uint32_t num_values = std::min(batch_size, table_meta->num_rows_ - num_inserted);
+    for (auto &col_meta : table_meta->col_meta_) {
+      values.emplace_back(MakeValues(&col_meta, num_values));
+    }
+    for (uint32_t i = 0; i < num_values; i++) {
+      std::vector<Value> entry;
+      entry.reserve(values.size());
+      for (const auto &col : values) {
+        entry.emplace_back(col[i]);
+      }
+      RID rid;
+      bool inserted = info->table_->InsertTuple(Tuple(entry, &info->schema_), &rid, exec_ctx_->GetTransaction());
+      BUSTUB_ASSERT(inserted, "Sequential insertion cannot fail");
+      num_inserted++;
+    }
+    // exec_ctx_->GetBufferPoolManager()->FlushAllPages();
+  }
   }
 
   // This function is called after every test.
@@ -122,7 +147,7 @@ class ExecutorTest : public ::testing::Test {
 };
 
 // NOLINTNEXTLINE
-TEST_F(ExecutorTest, DISABLED_SimpleSeqScanTest) {
+TEST_F(ExecutorTest, ENABLED_SimpleSeqScanTest) {
   // SELECT colA, colB FROM test_1 WHERE colA < 500
   TableMetadata *table_info = GetExecutorContext()->GetCatalog()->GetTable("test_1");
   Schema &schema = table_info->schema_;
